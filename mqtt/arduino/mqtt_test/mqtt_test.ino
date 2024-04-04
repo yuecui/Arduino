@@ -1,16 +1,16 @@
 #include <PubSubClient.h>
 #include <WiFiNINA.h>
-
+#include "keys.h"
 
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
-char ssid[] = "WhatDoesTheFoxSay2G";        // your network SSID (name)
-char pass[] = "n484edhXYgn6fc";    // your network password (use for WPA, or use as key for WEP)
-
+char ssid[] = TEST_SSID;        // your network SSID (name)
+char pass[] = TEST_PASS;    // your network password (use for WPA, or use as key for WEP)
+char user[] = AUM_USER;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient;
 
-const char* server  = "192.168.0.214";
+const char* server  = "172.16.38.200";
 int        port     = 1883;
 const char topic[]  = "test/room1";
 const char* clientID = "Arduino_mkr1010";
@@ -43,12 +43,21 @@ void setup() {
   // attempt to connect to Wifi network:
   Serial.print("Attempting to connect to WPA SSID: ");
   Serial.println(ssid);
+  
   while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
     // failed, retry
     Serial.print(".");
     delay(5000);
   }
 
+/*
+  while (WiFi.beginEnterprise(ssid, user, pass) != WL_CONNECTED) 
+  {
+    // failed, retry
+    Serial.print(".");
+    delay(5000);
+  }
+  */
   Serial.println("You're connected to the network");
   Serial.println();
 
