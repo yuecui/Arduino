@@ -1,94 +1,123 @@
+
 #include <WiFiNINA.h>
 #include "keys.h"
-#include <WiFiClientSecure.h>
+#include <SPI.h>
 #include <UniversalTelegramBot.h>
-
+#include <ArduinoJson.h>
 // Initialize Wifi connection to the router
-char ssid[] = TEST_SSID; 
-char pass[] = TEST_PASS;          
-const int ledPin = 7;
-const unsigned long BOT_MTBS = 1000; // mean time between scan messages
+char ssid[] = HOME_SSID; 
+char pass[] = HOME_PASS;     
 
-X509List cert(TELEGRAM_CERTIFICATE_ROOT);
-WiFiClientSecure secured_client;
-UniversalTelegramBot bot(BOTtoken, secured_client);
+const int ledPin = 6;
+const int motionSensor = 7;
+bool ledState = LOW;
+bool motionDetected = false;
 
-void handleNewMessages(int numNewMessages)
-{
+#define BOTtoken "6770348494:AAEmwuHsbI9F7hcNdhsQU0c1CTW177znPHQ"
+#define CHAT_ID "6350339401"
+WiFiSSLClient client;
+UniversalTelegramBot bot(BOTtoken, client);
 
-  for (int i = 0; i < numNewMessages; i++)
-  {
+int botRequestDelay = 1000;
+unsigned long lastTimeBotRan;
 
-    // Inline buttons with callbacks when pressed will raise a callback_query message
-    if (bot.messages[i].type == "callback_query")
-    {
-      Serial.print("Call back button pressed by: ");
-      Serial.println(bot.messages[i].from_id);
-      Serial.print("Data on the button: ");
-      Serial.println(bot.messages[i].text);
-      bot.sendMessage(bot.messages[i].from_id, bot.messages[i].text, "");
+
+void handleNewMessages(int numNewMessages) {
+  Serial.println("handleNewMessages");
+  Serial.println(String(numNewMessages));
+
+  for (int i=0; i<numNewMessages; i++) {
+    // Chat id of the requester
+    String chat_id = String(bot.messages[i].chat_id);
+   
+    
+    // Print the received message
+    String text = bot.messages[i].text;
+    Serial.println(text);
+
+    String from_name = bot.messages[i].from_name;
+
+    if (text == "/start") {
+      String welcome = "Welcome, " + from_name + ".\n";
+      welcome += "Use the following commands to control your outputs.\n\n";
+      welcome += "/led_on to turn light ON \n";
+      welcome += "/led_off to turn ligh OFF \n";
+      welcome += "/state to request current GPIO state \n";
+      bot.sendMessage(chat_id, welcome, "");
     }
-    else
-    {
-      String chat_id = bot.messages[i].chat_id;
-      String text = bot.messages[i].text;
 
-      String from_name = bot.messages[i].from_name;
-      if (from_name == "")
-        from_name = "Guest";
-
-      if (text == "/options")
-      {
-        String keyboardJson = "[[{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }],[{ \"text\" : \"Send\", \"callback_data\" : \"This was sent by inline\" }]]";
-        bot.sendMessageWithInlineKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson);
+    if (text == "/led_on") {
+      bot.sendMessage(chat_id, "LED state set to ON", "");
+      ledState = HIGH;
+      digitalWrite(ledPin, ledState);
+    }
+    
+    if (text == "/led_off") {
+      bot.sendMessage(chat_id, "LED state set to OFF", "");
+      ledState = LOW;
+      digitalWrite(ledPin, ledState);
+    }
+    
+    if (text == "/state") {
+      if (digitalRead(ledPin)){
+        bot.sendMessage(chat_id, "LED is ON", "");
       }
-
-      if (text == "/start")
-      {
-        String welcome = "Welcome to Universal Arduino Telegram Bot library, " + from_name + ".\n";
-        welcome += "This is Inline Keyboard Markup example.\n\n";
-        welcome += "/options : returns the inline keyboard\n";
-
-        bot.sendMessage(chat_id, welcome, "Markdown");
+      else{
+        bot.sendMessage(chat_id, "LED is OFF", "");
       }
     }
   }
 }
-void setup()
-{
-  pinMode(ledPin, OUTPUT);
-  Serial.begin(9600);
-  while (!Serial) 
-  {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+void setup() {
+
+  Serial.begin(115200);
+  while (!Serial) {}
+  delay(3000);
+
 
   // attempt to connect to Wifi network:
-  Serial.print("Attempting to connect to WPA SSID: ");
+  Serial.print("Connecting Wifi: ");
   Serial.println(ssid);
-  
-  while (WiFi.begin(ssid, pass) != WL_CONNECTED) 
-  {
-    // failed, retry
+  while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
     Serial.print(".");
-    delay(5000);
+    delay(500);
   }
-  Serial.println("You're connected to the network");
-  Serial.println();
-}
-void loop()
-{
-  if (millis() - bot_lasttime > BOT_MTBS)
-  {
+  Serial.println("");
+  Serial.println("WiFi connected");
+
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, ledState);
+  pinMode(motionSensor, INPUT);
+  }
+
+void loop() {
+  
+ 
+  if (millis() > lastTimeBotRan + botRequestDelay)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-    while (numNewMessages)
-    {
+    while(numNewMessages) {
       Serial.println("got response");
       handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     }
-
-    bot_lasttime = millis();
+    lastTimeBotRan = millis();
+    int val = digitalRead(motionSensor);
+    
+    if (val == HIGH)
+    {
+      if (motionDetected == false) {
+        bot.sendMessage(CHAT_ID, "Motion detected!!", "");
+        Serial.println("Motion Detected");
+        motionDetected = true;
+      }
+    }else{
+      if(motionDetected == true){
+        Serial.println("Motion Ended");
+        bot.sendMessage(CHAT_ID, "All-Cleared", "");
+        motionDetected = false;
+      }
+    }
+  
   }
 }

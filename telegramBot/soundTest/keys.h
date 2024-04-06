@@ -15,4 +15,4 @@
 
 
 #define BOTtoken "6770348494:AAEmwuHsbI9F7hcNdhsQU0c1CTW177znPHQ"
-#define CHATID "6350339401"
+#define CHAT_ID "6350339401"
