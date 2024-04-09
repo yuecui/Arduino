@@ -14,5 +14,7 @@
 
 
 
-#define BOTtoken "6770348494:AAEmwuHsbI9F7hcNdhsQU0c1CTW177znPHQ"
+#define BOTtoken "6770348494:AAF-Mz1kMCOwe_XpR1AK5aA5Ldr26GwD3GI"
 #define CHATID "6350339401"
+
+

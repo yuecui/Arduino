@@ -13,7 +13,7 @@ const int motionSensor = 7;
 bool ledState = LOW;
 bool motionDetected = false;
 
-#define BOTtoken "6770348494:AAEmwuHsbI9F7hcNdhsQU0c1CTW177znPHQ"
+#define BOTtoken "6770348494:AAF-Mz1kMCOwe_XpR1AK5aA5Ldr26GwD3GI"
 #define CHAT_ID "6350339401"
 WiFiSSLClient client;
 UniversalTelegramBot bot(BOTtoken, client);
@@ -102,22 +102,22 @@ void loop() {
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     }
     lastTimeBotRan = millis();
-    int val = digitalRead(motionSensor);
+    // int val = digitalRead(motionSensor);
     
-    if (val == HIGH)
-    {
-      if (motionDetected == false) {
-        bot.sendMessage(CHAT_ID, "Motion detected!!", "");
-        Serial.println("Motion Detected");
-        motionDetected = true;
-      }
-    }else{
-      if(motionDetected == true){
-        Serial.println("Motion Ended");
-        bot.sendMessage(CHAT_ID, "All-Cleared", "");
-        motionDetected = false;
-      }
-    }
+    // if (val == HIGH)
+    // {
+    //   if (motionDetected == false) {
+    //     bot.sendMessage(CHAT_ID, "Motion detected!!", "");
+    //     Serial.println("Motion Detected");
+    //     motionDetected = true;
+    //   }
+    // }else{
+    //   if(motionDetected == true){
+    //     Serial.println("Motion Ended");
+    //     bot.sendMessage(CHAT_ID, "All-Cleared", "");
+    //     motionDetected = false;
+    //   }
+    // }
   
   }
 }
